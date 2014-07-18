@@ -10,10 +10,11 @@ import java.io.Serializable;
 import net.rmi.interfaces.ClientInterface;
 
 /**
- *
+ * Bean para uma Operação.
+ * 
  * @author henrique
  */
-public class Operacao implements Serializable{
+public class Operacao implements Serializable {
     private final boolean isCompra;
     private String companyID;
     private Integer quantidade;
@@ -21,6 +22,13 @@ public class Operacao implements Serializable{
     
     private final ClientInterface clientSign;
 
+    /**
+     * Construtora da classe.
+     * 
+     * @param isCompra true se é uma operação do tipo compra.
+     * @param company código que identifica uma empresa.
+     * @param client interface de um cliente.
+     */
     public Operacao(boolean isCompra, String company, ClientInterface client) {
         this.isCompra = isCompra;
         this.clientSign = client;
@@ -58,6 +66,5 @@ public class Operacao implements Serializable{
     public String getCompanyID() {
         return companyID;
     }
-    
     
 }

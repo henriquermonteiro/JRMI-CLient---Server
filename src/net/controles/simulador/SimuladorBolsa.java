@@ -9,6 +9,7 @@ import net.controles.service.Controller;
 
 /**
  * Thread para realizar a flutuação do valor das ações.
+ * 
  * @author Henriques
  */
 public class SimuladorBolsa extends Thread {
@@ -16,10 +17,18 @@ public class SimuladorBolsa extends Thread {
     private boolean keepRunning;
     private Controller controle;
 
+    /**
+     * Construtora da classe.
+     * 
+     * @param server Controlador do conjunto de empresas
+     */
     public SimuladorBolsa(Controller server) {
         this.controle = server;
     }
 
+    /**
+     * Método que inicializa a Thread, e altera o valor de uma ação a cada meio minuto.
+     */
     @Override
     public void run() {
         super.run();

@@ -12,6 +12,7 @@ import net.rmi.beans.Empresa;
 /**
  * Classe responsável por controlar o conjunto de empresas do servidor, repassando os
  * eventos para o encapsulador responsável.
+ * 
  * @author Henriques
  */
 public class Controller {
@@ -28,6 +29,7 @@ public class Controller {
 
     /**
      * Adiciona uma nova empresa à lista.
+     * 
      * @param empresa Nova empresa
      */
     public void addCompany(Empresa empresa) {
@@ -37,7 +39,8 @@ public class Controller {
     }
 
     /**
-     * Redireciona para gerenciador da empresa;
+     * Redireciona para gerenciador da empresa.
+     * 
      * @param empresaID ID da empresa
      * @return Gerenciador/Encapsulador da empresa ou NULL se não for encontrado.
      */
@@ -47,6 +50,7 @@ public class Controller {
 
     /**
      * Retorna uma lista de todas as empresas como Beans.
+     * 
      * @return lista de empresas
      */
     public ArrayList<Empresa> getListaEmpresas() {

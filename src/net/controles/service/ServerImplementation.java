@@ -19,14 +19,16 @@ import net.rmi.interfaces.ServerInterface;
 
 /**
  * Classe que implementa a interface do servidor.
+ * 
  * @author Henriques
  */
-public class ServerImplementation extends UnicastRemoteObject implements ServerInterface{
+public class ServerImplementation extends UnicastRemoteObject implements ServerInterface {
     private SimuladorBolsa simulador;
     private Controller controle;
 
     /**
      * Construtora da classe.
+     * 
      * @throws RemoteException 
      */
     public ServerImplementation() throws RemoteException {
@@ -40,6 +42,7 @@ public class ServerImplementation extends UnicastRemoteObject implements ServerI
     
     /**
      * Registra uma nova empresa à lista de empresas do servidor.
+     * 
      * @param empresa nova empresa.
      */
     public void addEmpresa(Empresa empresa){
@@ -48,6 +51,7 @@ public class ServerImplementation extends UnicastRemoteObject implements ServerI
 
     /**
      * Metodo que registra um novo ouvinte a uma determinada empresa.
+     * 
      * @param empresa empresa que reberá o novo ouvinte
      * @param client cliente ouvinte
      * @return verdadeiro se a operação for bem sucedida, falso do contrário.
@@ -60,6 +64,7 @@ public class ServerImplementation extends UnicastRemoteObject implements ServerI
 
     /**
      * Registra uma nova operação de compra ou venda.
+     * 
      * @param operacao nova operação
      * @return verdadeiro se for bem sucedido, falso do contrário.
      * @throws RemoteException 
@@ -75,6 +80,7 @@ public class ServerImplementation extends UnicastRemoteObject implements ServerI
 
     /**
      * Retorna uma lista de todas as empresas cadastradas no servidor.
+     * 
      * @return Lista de empresas disponíveis no servidor
      * @throws RemoteException 
      */
@@ -85,6 +91,7 @@ public class ServerImplementation extends UnicastRemoteObject implements ServerI
     
     /**
      * Método de inicialização do servidor.
+     * 
      * @param args 
      */
     public static void main(String ... args){

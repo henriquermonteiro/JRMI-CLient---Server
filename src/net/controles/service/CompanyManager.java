@@ -32,6 +32,7 @@ public class CompanyManager {
 
     /**
      * Construtora da classe. Recebe o Bean da empresa que irá encapsular.
+     * 
      * @param empresa Bean que será encapsulado
      */
     public CompanyManager(Empresa empresa) {
@@ -44,16 +45,16 @@ public class CompanyManager {
 
     /**
      * Permite o acesso à empresa.
+     * 
      * @return Empresa encapsulada
      */
     public Empresa getEmpresa() {
         return empresa;
     }
 
-    // ---------------------------------------------  Compra/Venda ------------
-
     /**
      * Adiciona uma operação de compra à lista de espera, ou realiza a compra se for possível no momento.
+     * 
      * @param compra Nova operação
      * @return verdadeiro se a operação tiver sucesso, ou false do contrário.
      */
@@ -71,6 +72,7 @@ public class CompanyManager {
 
     /**
      * Adiciona uma operação de venda à lista de espera, ou realiza a venda se for possível no momento.
+     * 
      * @param venda Nova operação
      * @return verdadeiro se a operação tiver sucesso, ou false do contrário.
      */
@@ -88,8 +90,9 @@ public class CompanyManager {
 
     /**
      * Busca uma operação de venda na lista de espera compatível com a operação 
-     * de compra fornecida como parâmetro. Se for encontrado um par a operação é realizada,
+     * de compra fornecida como parâmetro. Se for encontrado um par, a operação é realizada,
      * removendo a venda que estava aguardando e disparando a notificação para os clientes.
+     * 
      * @param compra Operação que será comparada
      * @return verdadeiro se for encontrado um par e notificado os clientes, falso do contrário.
      */
@@ -126,9 +129,10 @@ public class CompanyManager {
     }
 
     /**
-     * Busca uma operação de compra na lista de espera compatível com a operação 
-     * de venda fornecida como parâmetro. Se for encontrado um par a operação é realizada,
+     * Busca uma operação de COMPRA na lista de espera compatível com a operação 
+     * de VENDA fornecida como parâmetro. Se for encontrado um par, a operação é realizada,
      * removendo a compra que estava aguardando e disparando a notificação para os clientes.
+     * 
      * @param venda Operação que será comparada
      * @return verdadeiro se for encontrado um par e notificado os clientes, falso do contrário.
      */
@@ -164,11 +168,9 @@ public class CompanyManager {
         return false;
     }
 
-    //----------------------------------------Final[Compra/Venda]-----------------
-    
-    //----------------------------------------Ouvintes----------------------------
     /**
      * Adiciona um cliente como ouvinte dos eventos da empresa encapsulada.
+     * 
      * @param ouvinte cliente que deve receber as notificações
      * @return verdadeiro se a adição for bem sucedida, falso do contrário.
      */
@@ -212,11 +214,8 @@ public class CompanyManager {
         }
     }
     
-    //----------------------------------------Final[Ouvintes]----------------------------
-    
-    //----------------------------------------Interface Com 'Empresa' ------------------
     /**
-     * Seta o preço das ações da empresa e dispara a notificação aos clientes.
+     * Método altera o preço das ações da empresa, e dispara a notificação aos clientes.
      * @param value Novo valor das ações.
      */
     public void setValue(Integer value){
@@ -224,5 +223,4 @@ public class CompanyManager {
         fireNotify();
     }
     
-    //----------------------------------Final[Interface Com 'Empresa' ]------------------
 }
