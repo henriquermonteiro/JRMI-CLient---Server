@@ -7,6 +7,7 @@ package net.controles.service;
 
 import java.rmi.RemoteException;
 import java.util.ArrayList;
+import java.util.Calendar;
 import net.rmi.beans.Empresa;
 import net.rmi.beans.Operacao;
 import net.rmi.interfaces.ClientInterface;
@@ -57,14 +58,14 @@ public class CompanyManager {
      * for possível no momento.
      *
      * @param compra Nova operação
-     * @return verdadeiro se a operação tiver sucesso, ou false do contrário.
+     * @return verdadeiro se a operação tiver sucesso, ou falso do contrário.
      */
     public boolean addCompra(Operacao compra) {
         if (compra.isCompra()) { // Se for uma operação de compra
 //            if (!matchBuy(compra)) { // Se a operação de compra não possuir uma operação de venda compatível aguardando
 //                compras.add(compra); // Adiciona à fila de espera
 //            }
-            
+
             matchBuy(compra);
 
             return true;
@@ -85,7 +86,7 @@ public class CompanyManager {
 //            if (!matchSell(venda)) {
 //                vendas.add(venda);
 //            }
-            
+
             matchSell(venda);
 
             return true;
@@ -105,47 +106,56 @@ public class CompanyManager {
      * falso do contrário.
      */
     private boolean matchBuy(Operacao compra) {
+        if (hasExpired(compra)) {
+            System.out.println("Já expirou!");
+            return false;
+        }
+
         ArrayList<Operacao> rem = new ArrayList<>();
 
         for (Operacao venda : vendas) {
-            if (compra.getPreçoUnitarioDesejado() >= venda.getPreçoUnitarioDesejado()) {
-                int quantidade = Math.min(compra.getQuantidade(), venda.getQuantidade());
-                int mediaPreco = (compra.getPreçoUnitarioDesejado() + venda.getPreçoUnitarioDesejado()) / 2;
+            if (!hasExpired(venda)) {
+                if (compra.getPreçoUnitarioDesejado() >= venda.getPreçoUnitarioDesejado()) {
+                    int quantidade = Math.min(compra.getQuantidade(), venda.getQuantidade());
+                    int mediaPreco = (compra.getPreçoUnitarioDesejado() + venda.getPreçoUnitarioDesejado()) / 2;
 
-                try {
-                    //Notifica o comprador e o vendedor
-                    Operacao compraN = new Operacao(true, compra.getCompanyID(), compra.getClientSign()).setPreçoUnitarioDesejado(mediaPreco).setQuantidade(quantidade);
-                    Operacao vendaN = new Operacao(false, venda.getCompanyID(), venda.getClientSign()).setPreçoUnitarioDesejado(mediaPreco).setQuantidade(quantidade);
-                    
-                    compra.getClientSign().notifyCompletedOperation(compraN);
-                    venda.getClientSign().notifyCompletedOperation(vendaN);
+                    try {
+                        //Notifica o comprador e o vendedor
+                        Operacao compraN = new Operacao(compra).setPreçoUnitarioDesejado(mediaPreco).setQuantidade(quantidade);
+                        Operacao vendaN = new Operacao(venda).setPreçoUnitarioDesejado(mediaPreco).setQuantidade(quantidade);
 
-                } catch (RemoteException ex) {
-                    System.err.println(this.getClass() + " - Erro Remoto:Compra");
-                    break;
-                }
+                        compra.getClientSign().notifyCompletedOperation(compraN);
+                        venda.getClientSign().notifyCompletedOperation(vendaN);
 
-                if (venda.getQuantidade() > quantidade) {
-                    venda.setQuantidade(venda.getQuantidade() - quantidade);
-                    System.out.println("Sobrou na venda: " + venda.getQuantidade());
-                    compra.setQuantidade(0);
-                    break;
-                } else {
-                    if (compra.getQuantidade() > quantidade) {
-                        compra.setQuantidade(compra.getQuantidade() - quantidade);
-                    System.out.println("Sobrou na compra: " + compra.getQuantidade());
-                    } else {
-                    System.out.println("Igualou");
-                        compra.setQuantidade(0);
-                        rem.add(venda);
+                    } catch (RemoteException ex) {
+                        System.err.println(this.getClass() + " - Erro Remoto:Compra");
                         break;
                     }
+
+                    if (venda.getQuantidade() > quantidade) {
+                        venda.setQuantidade(venda.getQuantidade() - quantidade);
+                        System.out.println("Sobrou na venda: " + venda.getQuantidade());
+                        compra.setQuantidade(0);
+                        break;
+                    } else {
+                        if (compra.getQuantidade() > quantidade) {
+                            compra.setQuantidade(compra.getQuantidade() - quantidade);
+                            System.out.println("Sobrou na compra: " + compra.getQuantidade());
+                        } else {
+                            System.out.println("Igualou");
+                            compra.setQuantidade(0);
+                            rem.add(venda);
+                            break;
+                        }
+                    }
                 }
+            } else {
+                rem.add(venda);
             }
         }
 
         if (compra.getQuantidade() != 0) {
-                    System.out.println("Guardou a sobra: " + compra.getQuantidade());
+            System.out.println("Guardou a sobra: " + compra.getQuantidade());
             compras.add(compra);
         }
 
@@ -171,44 +181,53 @@ public class CompanyManager {
      * falso do contrário.
      */
     private boolean matchSell(Operacao venda) {
+        if (hasExpired(venda)) {
+            System.out.println("Já expirou!");
+            return false;
+        }
+
         ArrayList<Operacao> rem = new ArrayList<>();
 
         for (Operacao compra : compras) {
             System.out.println("Fila: " + compras.size() + " !| " + compra.getCompanyID() + ", " + compra.getQuantidade() + ", " + compra.getPreçoUnitarioDesejado());
-            if (venda.getPreçoUnitarioDesejado() <= compra.getPreçoUnitarioDesejado()) {
-                int quantidade = Math.min(venda.getQuantidade(), compra.getQuantidade());
-                int mediaPreco = (venda.getPreçoUnitarioDesejado() + compra.getPreçoUnitarioDesejado()) / 2;
+            if (!hasExpired(compra)) {
+                if (venda.getPreçoUnitarioDesejado() <= compra.getPreçoUnitarioDesejado()) {
+                    int quantidade = Math.min(venda.getQuantidade(), compra.getQuantidade());
+                    int mediaPreco = (venda.getPreçoUnitarioDesejado() + compra.getPreçoUnitarioDesejado()) / 2;
 
-                try {
-                    //Notifica o comprador e o vendedor
-                    Operacao compraN = new Operacao(true, compra.getCompanyID(), compra.getClientSign()).setPreçoUnitarioDesejado(mediaPreco).setQuantidade(quantidade);
-                    Operacao vendaN = new Operacao(false, venda.getCompanyID(), venda.getClientSign()).setPreçoUnitarioDesejado(mediaPreco).setQuantidade(quantidade);
-                    
-                    compra.getClientSign().notifyCompletedOperation(compraN);
-                    venda.getClientSign().notifyCompletedOperation(vendaN);
+                    try {
+                        //Notifica o comprador e o vendedor
+                        Operacao compraN = new Operacao(compra).setPreçoUnitarioDesejado(mediaPreco).setQuantidade(quantidade);
+                        Operacao vendaN = new Operacao(venda).setPreçoUnitarioDesejado(mediaPreco).setQuantidade(quantidade);
 
-                } catch (RemoteException ex) {
-                    System.err.println(this.getClass() + " - Erro Remoto:Venda");
-                    break;
-                }
+                        compra.getClientSign().notifyCompletedOperation(compraN);
+                        venda.getClientSign().notifyCompletedOperation(vendaN);
 
-                if (compra.getQuantidade() > quantidade) {
-                    compra.setQuantidade(compra.getQuantidade() - quantidade);
-                    System.out.println("Sobrou na compra: " + compra.getQuantidade());
-                    venda.setQuantidade(0);
-                    break;
-                } else {
-                    if (venda.getQuantidade() > quantidade) {
-                        venda.setQuantidade(venda.getQuantidade() - quantidade);
-                    System.out.println("Sobrou na venda: " + venda.getQuantidade());
-                    } else {
-                        
-                    System.out.println("Igualou");
-                        venda.setQuantidade(0);
-                        rem.add(compra);
+                    } catch (RemoteException ex) {
+                        System.err.println(this.getClass() + " - Erro Remoto:Venda");
                         break;
                     }
+
+                    if (compra.getQuantidade() > quantidade) {
+                        compra.setQuantidade(compra.getQuantidade() - quantidade);
+                        System.out.println("Sobrou na compra: " + compra.getQuantidade());
+                        venda.setQuantidade(0);
+                        break;
+                    } else {
+                        if (venda.getQuantidade() > quantidade) {
+                            venda.setQuantidade(venda.getQuantidade() - quantidade);
+                            System.out.println("Sobrou na venda: " + venda.getQuantidade());
+                        } else {
+
+                            System.out.println("Igualou");
+                            venda.setQuantidade(0);
+                            rem.add(compra);
+                            break;
+                        }
+                    }
                 }
+            } else {
+                rem.add(compra);
             }
         }
 
@@ -285,4 +304,14 @@ public class CompanyManager {
         fireNotify();
     }
 
+    boolean hasExpired(Operacao consult) {
+        Calendar today = Calendar.getInstance();
+        Calendar opDate = consult.getExpireDate();
+
+        today.set(today.get(Calendar.YEAR), today.get(Calendar.MONTH), today.get(Calendar.DAY_OF_MONTH), 01, 0, 0);
+        opDate.set(opDate.get(opDate.YEAR), opDate.get(opDate.MONTH), opDate.get(opDate.DAY_OF_MONTH), 23, 0, 0);
+
+        return opDate.before(today);
+
+    }
 }
