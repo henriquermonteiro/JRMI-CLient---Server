@@ -12,9 +12,9 @@ import net.rmi.beans.Operacao;
 import net.rmi.interfaces.ClientInterface;
 
 /**
- * Classe que encapsula o Bean Empresa para disponibilizar
- * mecanismos de controle para o servidor.
- * 
+ * Classe que encapsula o Bean Empresa para disponibilizar mecanismos de
+ * controle para o servidor.
+ *
  * @author Henriques
  */
 public class CompanyManager {
@@ -32,7 +32,7 @@ public class CompanyManager {
 
     /**
      * Construtora da classe. Recebe o Bean da empresa que irá encapsular.
-     * 
+     *
      * @param empresa Bean que será encapsulado
      */
     public CompanyManager(Empresa empresa) {
@@ -45,7 +45,7 @@ public class CompanyManager {
 
     /**
      * Permite o acesso à empresa.
-     * 
+     *
      * @return Empresa encapsulada
      */
     public Empresa getEmpresa() {
@@ -53,16 +53,19 @@ public class CompanyManager {
     }
 
     /**
-     * Adiciona uma operação de compra à lista de espera, ou realiza a compra se for possível no momento.
-     * 
+     * Adiciona uma operação de compra à lista de espera, ou realiza a compra se
+     * for possível no momento.
+     *
      * @param compra Nova operação
      * @return verdadeiro se a operação tiver sucesso, ou false do contrário.
      */
     public boolean addCompra(Operacao compra) {
         if (compra.isCompra()) { // Se for uma operação de compra
-            if (!matchBuy(compra)) { // Se a operação de compra não possuir uma operação de venda compatível aguardando
-                compras.add(compra); // Adiciona à fila de espera
-            }
+//            if (!matchBuy(compra)) { // Se a operação de compra não possuir uma operação de venda compatível aguardando
+//                compras.add(compra); // Adiciona à fila de espera
+//            }
+            
+            matchBuy(compra);
 
             return true;
         }
@@ -71,16 +74,19 @@ public class CompanyManager {
     }
 
     /**
-     * Adiciona uma operação de venda à lista de espera, ou realiza a venda se for possível no momento.
-     * 
+     * Adiciona uma operação de venda à lista de espera, ou realiza a venda se
+     * for possível no momento.
+     *
      * @param venda Nova operação
      * @return verdadeiro se a operação tiver sucesso, ou false do contrário.
      */
     public boolean addVenda(Operacao venda) {
         if (!venda.isCompra()) {
-            if (!matchSell(venda)) {
-                vendas.add(venda);
-            }
+//            if (!matchSell(venda)) {
+//                vendas.add(venda);
+//            }
+            
+            matchSell(venda);
 
             return true;
         }
@@ -89,16 +95,18 @@ public class CompanyManager {
     }
 
     /**
-     * Busca uma operação de venda na lista de espera compatível com a operação 
-     * de compra fornecida como parâmetro. Se for encontrado um par, a operação é realizada,
-     * removendo a venda que estava aguardando e disparando a notificação para os clientes.
-     * 
+     * Busca uma operação de venda na lista de espera compatível com a operação
+     * de compra fornecida como parâmetro. Se for encontrado um par, a operação
+     * é realizada, removendo a venda que estava aguardando e disparando a
+     * notificação para os clientes.
+     *
      * @param compra Operação que será comparada
-     * @return verdadeiro se for encontrado um par e notificado os clientes, falso do contrário.
+     * @return verdadeiro se for encontrado um par e notificado os clientes,
+     * falso do contrário.
      */
     private boolean matchBuy(Operacao compra) {
-        Operacao rem = null;
-        
+        ArrayList<Operacao> rem = new ArrayList<>();
+
         for (Operacao venda : vendas) {
             if (compra.getPreçoUnitarioDesejado() >= venda.getPreçoUnitarioDesejado()) {
                 int quantidade = Math.min(compra.getQuantidade(), venda.getQuantidade());
@@ -106,22 +114,46 @@ public class CompanyManager {
 
                 try {
                     //Notifica o comprador e o vendedor
-                    compra.getClientSign().notifyCompletedOperation(compra.setPreçoUnitarioDesejado(mediaPreco).setQuantidade(quantidade));
-                    venda.getClientSign().notifyCompletedOperation(venda.setPreçoUnitarioDesejado(mediaPreco).setQuantidade(quantidade));
+                    Operacao compraN = new Operacao(true, compra.getCompanyID(), compra.getClientSign()).setPreçoUnitarioDesejado(mediaPreco).setQuantidade(quantidade);
+                    Operacao vendaN = new Operacao(false, venda.getCompanyID(), venda.getClientSign()).setPreçoUnitarioDesejado(mediaPreco).setQuantidade(quantidade);
+                    
+                    compra.getClientSign().notifyCompletedOperation(compraN);
+                    venda.getClientSign().notifyCompletedOperation(vendaN);
 
                 } catch (RemoteException ex) {
                     System.err.println(this.getClass() + " - Erro Remoto:Compra");
+                    break;
                 }
 
-                rem = venda;
-
-                break;
+                if (venda.getQuantidade() > quantidade) {
+                    venda.setQuantidade(venda.getQuantidade() - quantidade);
+                    System.out.println("Sobrou na venda: " + venda.getQuantidade());
+                    compra.setQuantidade(0);
+                    break;
+                } else {
+                    if (compra.getQuantidade() > quantidade) {
+                        compra.setQuantidade(compra.getQuantidade() - quantidade);
+                    System.out.println("Sobrou na compra: " + compra.getQuantidade());
+                    } else {
+                    System.out.println("Igualou");
+                        compra.setQuantidade(0);
+                        rem.add(venda);
+                        break;
+                    }
+                }
             }
         }
-        
-        if(rem != null){
-            vendas.remove(rem);
-            
+
+        if (compra.getQuantidade() != 0) {
+                    System.out.println("Guardou a sobra: " + compra.getQuantidade());
+            compras.add(compra);
+        }
+
+        if (!rem.isEmpty()) {
+            for (Operacao remover : rem) {
+                vendas.remove(remover);
+            }
+
             return true;
         }
 
@@ -129,39 +161,67 @@ public class CompanyManager {
     }
 
     /**
-     * Busca uma operação de COMPRA na lista de espera compatível com a operação 
-     * de VENDA fornecida como parâmetro. Se for encontrado um par, a operação é realizada,
-     * removendo a compra que estava aguardando e disparando a notificação para os clientes.
-     * 
+     * Busca uma operação de COMPRA na lista de espera compatível com a operação
+     * de VENDA fornecida como parâmetro. Se for encontrado um par, a operação é
+     * realizada, removendo a compra que estava aguardando e disparando a
+     * notificação para os clientes.
+     *
      * @param venda Operação que será comparada
-     * @return verdadeiro se for encontrado um par e notificado os clientes, falso do contrário.
+     * @return verdadeiro se for encontrado um par e notificado os clientes,
+     * falso do contrário.
      */
     private boolean matchSell(Operacao venda) {
-        Operacao rem = null;
-        
+        ArrayList<Operacao> rem = new ArrayList<>();
+
         for (Operacao compra : compras) {
+            System.out.println("Fila: " + compras.size() + " !| " + compra.getCompanyID() + ", " + compra.getQuantidade() + ", " + compra.getPreçoUnitarioDesejado());
             if (venda.getPreçoUnitarioDesejado() <= compra.getPreçoUnitarioDesejado()) {
                 int quantidade = Math.min(venda.getQuantidade(), compra.getQuantidade());
                 int mediaPreco = (venda.getPreçoUnitarioDesejado() + compra.getPreçoUnitarioDesejado()) / 2;
 
                 try {
                     //Notifica o comprador e o vendedor
-                    compra.getClientSign().notifyCompletedOperation(compra.setPreçoUnitarioDesejado(mediaPreco).setQuantidade(quantidade));
-                    venda.getClientSign().notifyCompletedOperation(venda.setPreçoUnitarioDesejado(mediaPreco).setQuantidade(quantidade));
+                    Operacao compraN = new Operacao(true, compra.getCompanyID(), compra.getClientSign()).setPreçoUnitarioDesejado(mediaPreco).setQuantidade(quantidade);
+                    Operacao vendaN = new Operacao(false, venda.getCompanyID(), venda.getClientSign()).setPreçoUnitarioDesejado(mediaPreco).setQuantidade(quantidade);
+                    
+                    compra.getClientSign().notifyCompletedOperation(compraN);
+                    venda.getClientSign().notifyCompletedOperation(vendaN);
 
                 } catch (RemoteException ex) {
                     System.err.println(this.getClass() + " - Erro Remoto:Venda");
+                    break;
                 }
 
-                rem = compra;
-
-                break;
+                if (compra.getQuantidade() > quantidade) {
+                    compra.setQuantidade(compra.getQuantidade() - quantidade);
+                    System.out.println("Sobrou na compra: " + compra.getQuantidade());
+                    venda.setQuantidade(0);
+                    break;
+                } else {
+                    if (venda.getQuantidade() > quantidade) {
+                        venda.setQuantidade(venda.getQuantidade() - quantidade);
+                    System.out.println("Sobrou na venda: " + venda.getQuantidade());
+                    } else {
+                        
+                    System.out.println("Igualou");
+                        venda.setQuantidade(0);
+                        rem.add(compra);
+                        break;
+                    }
+                }
             }
         }
-        
-        if(rem != null){
-            compras.remove(rem);
-            
+
+        if (venda.getQuantidade() != 0) {
+            System.out.println("Guardou a sobra da venda: " + venda.getQuantidade());
+            vendas.add(venda);
+        }
+
+        if (!rem.isEmpty()) {
+            for (Operacao remover : rem) {
+                compras.remove(remover);
+            }
+
             return true;
         }
 
@@ -170,7 +230,7 @@ public class CompanyManager {
 
     /**
      * Adiciona um cliente como ouvinte dos eventos da empresa encapsulada.
-     * 
+     *
      * @param ouvinte cliente que deve receber as notificações
      * @return verdadeiro se a adição for bem sucedida, falso do contrário.
      */
@@ -201,8 +261,8 @@ public class CompanyManager {
     private boolean notifying = false;
 
     /**
-     * Método auxiliar para disparar a notificação aos clientes ouvintes.
-     * Não permite notificações concorrentes.
+     * Método auxiliar para disparar a notificação aos clientes ouvintes. Não
+     * permite notificações concorrentes.
      */
     public void fireNotify() {
         if (!notifying) {
@@ -213,14 +273,16 @@ public class CompanyManager {
             notifying = false;
         }
     }
-    
+
     /**
-     * Método altera o preço das ações da empresa, e dispara a notificação aos clientes.
+     * Método altera o preço das ações da empresa, e dispara a notificação aos
+     * clientes.
+     *
      * @param value Novo valor das ações.
      */
-    public void setValue(Integer value){
+    public void setValue(Integer value) {
         empresa.setValue(value);
         fireNotify();
     }
-    
+
 }

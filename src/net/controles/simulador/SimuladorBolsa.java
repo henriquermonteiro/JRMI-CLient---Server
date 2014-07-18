@@ -27,7 +27,7 @@ public class SimuladorBolsa extends Thread {
     }
 
     /**
-     * Método que inicializa a Thread, e altera o valor de uma ação a cada meio minuto.
+     * Método que inicializa a Thread, e altera o valor de uma ação a cada meio segundo.
      */
     @Override
     public void run() {
@@ -39,7 +39,7 @@ public class SimuladorBolsa extends Thread {
             while (keepRunning) {
                 controle.sortear();
                 
-                sleep(500l);
+                sleep((long)500);
             }
         } catch (InterruptedException ex) {
             System.err.println(this.getClass() + " - Sleep Interrompido");
