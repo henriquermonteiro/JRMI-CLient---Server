@@ -108,4 +108,15 @@ public class ServerImplementation extends UnicastRemoteObject implements ServerI
         } catch (RemoteException ex) {
         }
     }
+
+    @Override
+    public Empresa getCompanyForID(String ID) throws RemoteException {
+        CompanyManager manager =  controle.getManagerFor(ID);
+        
+        if(manager != null){
+            return manager.getEmpresa();
+        }else{
+            return null;
+        }
+    }
 }

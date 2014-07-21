@@ -124,8 +124,11 @@ public class CompanyManager {
                         Operacao compraN = new Operacao(compra).setPreçoUnitarioDesejado(mediaPreco).setQuantidade(quantidade);
                         Operacao vendaN = new Operacao(venda).setPreçoUnitarioDesejado(mediaPreco).setQuantidade(quantidade);
 
-                        compra.getClientSign().notifyCompletedOperation(compraN);
-                        venda.getClientSign().notifyCompletedOperation(vendaN);
+                        if (venda.getClientSign().notifyCompletedOperation(vendaN)) {
+                            compra.getClientSign().notifyCompletedOperation(compraN);
+                        } else {
+                            continue;
+                        }
 
                     } catch (RemoteException ex) {
                         System.err.println(this.getClass() + " - Erro Remoto:Compra");
